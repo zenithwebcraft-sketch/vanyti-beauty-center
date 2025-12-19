@@ -7,10 +7,18 @@ import { DateTimeSelection } from "@/components/booking/DateTimeSelection";
 import { EmailCapture } from "@/components/booking/EmailCapture";
 import { PersonalDetailsForm } from "@/components/booking/PersonalDetailsForm";
 import { BookingConfirmation } from "@/components/booking/BookingConfirmation";
+import { useState } from 'react';  // 🆕 Agregar si no existe
+import { createBooking } from '@/lib/booking/api';  // 🆕 NUEVO IMPORT
+import { useToast } from '@/hooks/use-toast';  // 🆕 NUEVO IMPORT
+import { Loader2 } from 'lucide-react';  // 🆕 NUEVO IMPORT
+
 
 const Booking = () => {
   const { currentStep, formData, service, updateFormData, nextStep, previousStep, reset } = useBookingFlow();
 
+  const { toast } = useToast();  // 🆕 AGREGAR
+  const [isSubmitting, setIsSubmitting] = useState(false);  // 🆕 AGREGAR
+  
   const handleServiceSelect = (serviceId: string) => {
     updateFormData({ serviceId });
     nextStep();
@@ -26,10 +34,73 @@ const Booking = () => {
     nextStep();
   };
 
-  const handlePersonalDetailsSubmit = (data: { phone: string; firstName: string; lastName: string }) => {
-    updateFormData(data);
-    nextStep();
-  };
+const handlePersonalDetailsSubmit = async (data: { phone: string; firstName: string; lastName: string }) => {
+  if (!service || !formData.date || !formData.time || !formData.email) {
+    toast({
+      title: "Error",
+      description: "Faltan datos de la reserva",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  setIsSubmitting(true);
+
+  try {
+    // Construir dateTime ISO 8601
+    const dateTime = `${formData.date}T${formData.time}:00+01:00`;
+
+    // Crear booking en Google Calendar
+    const response = await createBooking({
+      serviceId: service.id,
+      serviceTitle: service.title,
+      dateTime,
+      duration: service.durationMin,
+      email: formData.email,
+      phone: data.phone,
+      firstName: data.firstName,
+      lastName: data.lastName,
+    });
+
+    if (response.success) {
+      // Guardar datos y avanzar a confirmación
+      updateFormData(data);
+      nextStep();
+      
+      toast({
+        title: "¡Cita confirmada!",
+        description: "Tu reserva ha sido creada exitosamente",
+      });
+    } else {
+      throw new Error(response.error?.message || 'Error desconocido');
+    }
+  } catch (error: any) {
+  console.error('Booking error:', error);
+  
+  if (error.message.includes('SLOT_NO_LONGER_AVAILABLE')) {
+    toast({
+      title: "Horario no disponible",
+      description: "Este horario acaba de ser reservado. Por favor selecciona otro.",
+      variant: "destructive",
+    });
+    // Volver al paso de selección de fecha/hora
+    updateFormData({ date: undefined, time: undefined });
+    // Como estamos en step 4 (details), hacemos previousStep 2 veces para volver a datetime
+    previousStep();
+    previousStep();
+  } else {
+    toast({
+      title: "Error al crear reserva",
+      description: error.message || "Hubo un problema. Por favor intenta de nuevo.",
+      variant: "destructive",
+    });
+  }
+} finally {
+  setIsSubmitting(false);
+}
+
+};
+
 
   const getStepNumber = () => {
     const stepMap = {
@@ -136,6 +207,7 @@ const Booking = () => {
                       selectedDate={formData.date}
                       selectedTime={formData.time}
                       serviceDuration={service.durationMin}
+                      serviceId={service.id}
                     />
                     <div className="flex gap-4 mt-8">
                       <Button
@@ -165,15 +237,25 @@ const Booking = () => {
                 )}
 
                 {currentStep === 'details' && (
-                  <PersonalDetailsForm
+                <>
+                    {isSubmitting && (
+                    <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10 rounded-lg">
+                        <div className="text-center">
+                        <Loader2 className="h-12 w-12 animate-spin text-pink-600 mx-auto mb-4" />
+                        <p className="text-gray-700 font-medium">Creando tu reserva...</p>
+                        </div>
+                    </div>
+                    )}
+                    <PersonalDetailsForm
                     onSubmit={handlePersonalDetailsSubmit}
                     onBack={previousStep}
                     initialData={{
-                      phone: formData.phone,
-                      firstName: formData.firstName,
-                      lastName: formData.lastName,
+                        phone: formData.phone,
+                        firstName: formData.firstName,
+                        lastName: formData.lastName,
                     }}
-                  />
+                    />
+                </>
                 )}
 
                 {currentStep === 'confirmation' && service && formData.email && formData.firstName && formData.lastName && (

@@ -33,37 +33,37 @@ export const PersonalDetailsForm = ({
     return phoneRegex.test(phone.replace(/\s/g, ''));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const newErrors: typeof errors = {};
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  const newErrors: typeof errors = {};
 
-    if (!phone.trim()) {
-      newErrors.phone = 'El teléfono es obligatorio';
-    } else if (!validatePhone(phone)) {
-      newErrors.phone = 'Ingresa un teléfono válido (solo números, mín. 9 dígitos)';
-    }
+  if (!phone.trim()) {
+    newErrors.phone = 'El teléfono es obligatorio';
+  } else if (!validatePhone(phone)) {
+    newErrors.phone = 'Ingresa un teléfono válido (solo números, mín. 9 dígitos)';
+  }
 
-    if (!firstName.trim()) {
-      newErrors.firstName = 'El nombre es obligatorio';
-    }
+  if (!firstName.trim()) {
+    newErrors.firstName = 'El nombre es obligatorio';
+  }
 
-    if (!lastName.trim()) {
-      newErrors.lastName = 'El apellido es obligatorio';
-    }
+  if (!lastName.trim()) {
+    newErrors.lastName = 'El apellido es obligatorio';
+  }
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors);
+    return;
+  }
 
-    setErrors({});
-    onSubmit({
-      phone: phone.replace(/\s/g, ''),
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-    });
-  };
+  setErrors({});
+  onSubmit({
+    phone: phone.replace(/\s/g, ''),
+    firstName: firstName.trim(),
+    lastName: lastName.trim(),
+  });
+};
 
   return (
     <div className="space-y-6">

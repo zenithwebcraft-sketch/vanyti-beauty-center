@@ -30,7 +30,7 @@ export interface StaffMember {
 export interface Location {
   id: string;
   name: string;
-  addressLine: string;
+  address: string;
   city: string;
   mapUrl: string;
 }

@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# En .gitignore (debería estar ya, pero verifica)
+.env.local
+.env*.local
+*.key.json
+
+# Google credentials
+google-credentials.json
+service-account-key.json

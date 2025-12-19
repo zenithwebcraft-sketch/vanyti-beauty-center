@@ -56,13 +56,16 @@ export interface AvailabilityResponse {
 
 export interface BookingApiRequest {
   serviceId: string;
+  serviceTitle: string;  // 🆕 AGREGAR ESTA LÍNEA
   dateTime: string; // ISO 8601
+  duration: number;  // 🆕 AGREGAR ESTA LÍNEA
   email: string;
   phone: string;
   firstName: string;
   lastName: string;
   locationId?: string;
 }
+
 
 export interface BookingApiResponse {
   success: boolean;
